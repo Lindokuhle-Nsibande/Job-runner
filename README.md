@@ -1,61 +1,126 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Custom Background Job Runner for Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A platform-independent background job processing system for Laravel applications, designed to work without Laravel's built-in queue system.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   Execute PHP classes/methods as background jobs
+-   Secure job execution with allow-list configuration
+-   Automatic retry mechanism for failed jobs
+-   Web-based job monitoring dashboard
+-   Delayed job execution
+-   Job priority system
+-   Detailed logging (success & errors)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Clone repository:
 
-## Learning Laravel
+```bash
+git https://github.com/Lindokuhle-Nsibande/Job-runner
+cd Job-runner
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+2. Install dependencies:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+composer install
 
-## Laravel Sponsors
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Create database and configure .env:
 
-### Premium Partners
+```.env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=your_db
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+4. Run migrations:
 
-## Contributing
+```bash
+php artisan migrate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
 
-## Code of Conduct
+## Configuration
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Edit config/background-jobs.php:
 
-## Security Vulnerabilities
+```php
+return [
+    'allowed' => [
+        App\Http\Controllers\Example::class => ['handle'],
+    ],
+    'retry' => [
+        'attempts' => 3,    // Max retry attempts
+        'delay' => 60,      // Seconds between retries
+    ],
+];
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Usage
 
-## License
+1. Using Helper Function
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```php
+runBackgroundJob(
+    \App\Http\Controllers\Example::class,
+    'handle',
+    ['param1', 'param2'], // Parameters as array
+    $delay = 60,          // Delay in seconds (optional)
+    $priority = 10        // Higher = prioritized first (optional)
+);
+```
+
+2. CLI Execution
+
+```bash
+php run-job.php "App\Http\Controllers\Example" "handle" ["param1","param2"]
+
+```
+
+3. Process Jobs
+
+```bash
+php artisan jobs:process
+
+```
+
+## Advanced Features
+
+### Web Dashboard
+
+Access job monitoring at: `http://localhost/jobs`
+
+#### Features
+
+-   View job status (pending/running/completed/failed)
+-   See retry attempts
+-   Cancel running jobs
+
+### Job Delays
+
+```php
+// Run after 5 minutes
+runBackgroundJob(Example::class, 'handle', [], 300);
+```
+
+### Job Priorities
+
+```php
+// High priority job (10)
+runBackgroundJob(Example::class, 'handle', [], 0, 10);
+
+// Normal priority (default 0)
+runBackgroundJob(Example::class, 'handle', [], 0, 0);
+```
+
+### Logging
+
+-   Success logs: `storage/logs/background_jobs.log`
+-   Error logs: `storage/logs/background_jobs_errors.log`
